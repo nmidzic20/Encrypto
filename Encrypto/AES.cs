@@ -74,7 +74,10 @@ namespace Encrypto
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string message = ex.Message;
+                if (ex.Message == "The input data is not a complete block.") message = "This file is not encrypted with AES algorithm.";
+
+                MessageBox.Show($"An error occurred: {message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
