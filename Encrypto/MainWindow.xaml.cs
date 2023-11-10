@@ -22,6 +22,8 @@ namespace Encrypto
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
         public MainWindow()
         {
             InitializeComponent();
@@ -29,8 +31,6 @@ namespace Encrypto
 
         private void Generate_Keys_Click(object sender, RoutedEventArgs e)
         {
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-
             string secretKeyPath = Path.Combine(desktopPath, "tajni_kljuc.txt");
             string publicKeyPath = Path.Combine(desktopPath, "javni_kljuc.txt");
             string privateKeyPath = Path.Combine(desktopPath, "privatni_kljuc.txt");
@@ -39,10 +39,9 @@ namespace Encrypto
             GenerateAndWriteRSAKeys(publicKeyPath, privateKeyPath);
 
             MessageBox.Show("AES and RSA keys successfully generated");
-
         }
 
-        public void GenerateAndWriteAesKey(string filePath)
+        public static void GenerateAndWriteAesKey(string filePath)
         {
             try
             {
@@ -68,12 +67,10 @@ namespace Encrypto
                 using (RSA rsaAlg = RSA.Create())
                 {
                     string publicKey = Convert.ToBase64String(rsaAlg.ExportRSAPublicKey());
-
                     string privateKey = Convert.ToBase64String(rsaAlg.ExportRSAPrivateKey());
 
                     File.WriteAllText(publicKeyPath, publicKey);
                     File.WriteAllText(privateKeyPath, privateKey);
-
                 }
             }
             catch (Exception ex)
@@ -84,23 +81,31 @@ namespace Encrypto
 
         private void Upload_Files_Click(object sender, RoutedEventArgs e)
         {
-
         }
 
         private void Encrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
+            ProcessFileWithAes(EncryptFileWithAes, "encryptedFileAES.txt");
+        }
+
+        private void Decrypt_Symmetric_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessFileWithAes(DecryptFileWithAes, "decryptedFileAES.txt");
+        }
+
+        private void ProcessFileWithAes(Action<string, string> processFunction, string resultFileName)
+        {
             try
             {
                 OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Title = "Select a file to encrypt";
+                openFileDialog.Title = $"Select a file to {processFunction.Method.Name.Substring(0, 7)}";
                 openFileDialog.Filter = "Text Files (*.txt)|*.txt";
 
                 if (openFileDialog.ShowDialog() == true)
                 {
                     string filePath = openFileDialog.FileName;
-                    EncryptFileWithAes(filePath);
+                    processFunction(filePath, resultFileName);
                 }
-
             }
             catch (Exception ex)
             {
@@ -108,11 +113,20 @@ namespace Encrypto
             }
         }
 
-        public static void EncryptFileWithAes(string filePath)
+        public static void EncryptFileWithAes(string filePath, string resultFileName)
+        {
+            PerformAesFileOperation(filePath, resultFileName, aesAlg => aesAlg.CreateEncryptor());
+        }
+
+        public static void DecryptFileWithAes(string filePath, string resultFileName)
+        {
+            PerformAesFileOperation(filePath, resultFileName, aesAlg => aesAlg.CreateDecryptor());
+        }
+
+        private static void PerformAesFileOperation(string filePath, string resultFileName, Func<Aes, ICryptoTransform> transformFunc)
         {
             try
             {
-                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 string keyFilePath = Path.Combine(desktopPath, "tajni_kljuc.txt");
 
                 if (File.Exists(keyFilePath))
@@ -126,78 +140,18 @@ namespace Encrypto
 
                         byte[] fileBytes = File.ReadAllBytes(filePath);
 
-                        byte[] encryptedBytes = aesAlg.CreateEncryptor().TransformFinalBlock(fileBytes, 0, fileBytes.Length);
+                        byte[] resultBytes = transformFunc(aesAlg).TransformFinalBlock(fileBytes, 0, fileBytes.Length);
 
-                        string encryptedFilePath = Path.Combine(desktopPath, "encryptedFileAES.txt");
-                        File.WriteAllBytes(encryptedFilePath, encryptedBytes);
+                        string resultFilePath = Path.Combine(desktopPath, resultFileName);
+                        File.WriteAllBytes(resultFilePath, resultBytes);
 
-                        MessageBox.Show($"File encrypted and saved to {encryptedFilePath} successfully.");
-
-                    }
-
-                }
-                else
-                {
-                    MessageBox.Show("Please generate keys first before encrypting a file.", "Key Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-
-        private void DecryptFileWithAes(string filePath)
-        {
-            try
-            {
-                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                string keyFilePath = Path.Combine(desktopPath, "tajni_kljuc.txt");
-
-                if (File.Exists(keyFilePath))
-                {
-                    string keyString = File.ReadAllText(keyFilePath);
-                    byte[] key = Convert.FromBase64String(keyString);
-
-                    using (Aes aesAlg = Aes.Create())
-                    {
-                        aesAlg.Key = key;
-
-                        byte[] encryptedBytes = File.ReadAllBytes(filePath);
-
-                        byte[] decryptedBytes = aesAlg.CreateDecryptor().TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
-
-                        string decryptedFilePath = Path.Combine(desktopPath, "decryptedFileAES.txt");
-                        File.WriteAllBytes(decryptedFilePath, decryptedBytes);
-
-                        MessageBox.Show($"File decrypted and saved to {decryptedFilePath} successfully.");
+                        MessageBox.Show($"File {(transformFunc.Method.Name.Contains("Encrypt") ? "encrypted" : "decrypted")} and saved to {resultFilePath} successfully.");
                     }
                 }
                 else
                 {
-                    MessageBox.Show("AES key file not found on the desktop. The file cannot be decrypted without the key with which it was encrypted.", "Key Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please generate keys first before processing a file.", "Key Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void Decrypt_Symmetric_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Title = "Select a file to decrypt";
-                openFileDialog.Filter = "Text Files (*.txt)|*.txt";
-
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    string filePath = openFileDialog.FileName;
-                    DecryptFileWithAes(filePath);
-                }
-
             }
             catch (Exception ex)
             {
