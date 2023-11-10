@@ -37,12 +37,14 @@ namespace Encrypto
 
         private AES aes;
         private Rsa rsa;
+        private SHA256Hash sha256;
 
         public MainWindow()
         {
             InitializeComponent();
             aes = new AES(secretKeyFilePath, initializationVectorFilePath, encryptedFilePathStart + aesFilePathEnd, decryptedFilePathStart + aesFilePathEnd);
             rsa = new Rsa(publicKeyFilePath, privateKeyFilePath, encryptedFilePathStart + rsaFilePathEnd, decryptedFilePathStart + rsaFilePathEnd);
+            sha256 = new SHA256Hash();
         }
 
         private void Generate_Keys_Click(object sender, RoutedEventArgs e)
@@ -80,7 +82,23 @@ namespace Encrypto
 
         private void Calculate_Hash_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFile(aes);
+            try
+            {
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Title = $"Select a file for which you want to calculate hash";
+                openFileDialog.Filter = "Text Files (*.txt)|*.txt";
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    string filePath = openFileDialog.FileName;
+                    string hash = sha256.CalculateFileHash(filePath);
+                    MessageBox.Show("Calculated hash with SHA-256: " + hash);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Make_Digital_Signature_Click(object sender, RoutedEventArgs e)
