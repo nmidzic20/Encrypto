@@ -23,10 +23,12 @@ namespace Encrypto
     public partial class MainWindow : Window
     {
         private static string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        private AES aes;
 
         public MainWindow()
         {
             InitializeComponent();
+            aes = new AES(Path.Combine(desktopPath, "tajni_kljuc.txt"), Path.Combine(desktopPath, "inicijalizacijski_vektor.txt"));
         }
 
         private void Generate_Keys_Click(object sender, RoutedEventArgs e)
@@ -79,18 +81,14 @@ namespace Encrypto
             }
         }
 
-        private void Upload_Files_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
         private void Encrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAes(EncryptFileWithAes, "encryptedFileAES.txt");
+            ProcessFileWithAes(aes.EncryptFile, "encryptedFileAES.txt");
         }
 
         private void Decrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAes(DecryptFileWithAes, "decryptedFileAES.txt");
+            ProcessFileWithAes(aes.DecryptFile, "decryptedFileAES.txt");
         }
 
         private void ProcessFileWithAes(Action<string, string> processFunction, string resultFileName)
@@ -113,62 +111,9 @@ namespace Encrypto
             }
         }
 
-        public static void EncryptFileWithAes(string filePath, string resultFileName)
+        private void Upload_Files_Click(object sender, RoutedEventArgs e)
         {
-            PerformAesFileOperation(filePath, resultFileName, aesAlg => {
-                aesAlg.GenerateIV();
-                File.WriteAllBytes(Path.Combine(desktopPath, "iv.txt"), aesAlg.IV);
-                return aesAlg.CreateEncryptor();
-            });
-        }
 
-        public static void DecryptFileWithAes(string filePath, string resultFileName)
-        {
-            PerformAesFileOperation(filePath, resultFileName, aesAlg =>
-            {
-                byte[] iv = File.ReadAllBytes(Path.Combine(desktopPath, "iv.txt"));
-                aesAlg.IV = iv;
-                return aesAlg.CreateDecryptor();
-            });
-        }
-
-        private static void PerformAesFileOperation(string filePath, string resultFileName, Func<Aes, ICryptoTransform> transformFunc)
-        {
-            try
-            {
-                string keyFilePath = Path.Combine(desktopPath, "tajni_kljuc.txt");
-
-                if (File.Exists(keyFilePath))
-                {
-                    string keyString = File.ReadAllText(keyFilePath);
-                    byte[] key = Convert.FromBase64String(keyString);
-
-                    using (Aes aesAlg = Aes.Create())
-                    {
-                        aesAlg.Key = key;
-
-                        byte[] fileBytes = File.ReadAllBytes(filePath);
-
-                        using (ICryptoTransform cryptoTransform = transformFunc(aesAlg))
-                        {
-                            byte[] resultBytes = cryptoTransform.TransformFinalBlock(fileBytes, 0, fileBytes.Length);
-
-                            string resultFilePath = Path.Combine(desktopPath, resultFileName);
-                            File.WriteAllBytes(resultFilePath, resultBytes);
-
-                            MessageBox.Show($"File {(transformFunc.Method.Name.Contains("Encrypt") ? "encrypted" : "decrypted")} and saved to {resultFilePath} successfully.");
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Please generate keys first before processing a file.", "Key Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
 
         private void Encrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
