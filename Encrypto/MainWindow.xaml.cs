@@ -55,25 +55,45 @@ namespace Encrypto
 
         private void Encrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAlgorithm(aes.EncryptFile);
+            ProcessFile(aes.EncryptFile);
         }
 
         private void Decrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAlgorithm(aes.DecryptFile);
+            ProcessFile(aes.DecryptFile);
         }
 
         private void Encrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAlgorithm(rsa.EncryptFile);
+            ProcessFile(rsa.EncryptFile);
         }
 
         private void Decrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAlgorithm(rsa.DecryptFile);
+            ProcessFile(rsa.DecryptFile);
         }
 
-        private void ProcessFileWithAlgorithm(Action<string> processFunction)
+        private void Upload_Files_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Calculate_Hash_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessFile(aes);
+        }
+
+        private void Make_Digital_Signature_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Check_Digital_Signature_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ProcessFile(Action<string> processFunction)
         {
             try
             {
@@ -92,26 +112,5 @@ namespace Encrypto
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        private void Upload_Files_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Calculate_Hash_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Make_Digital_Signature_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Check_Digital_Signature_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
     }
 }
