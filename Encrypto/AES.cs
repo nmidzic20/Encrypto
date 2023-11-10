@@ -13,21 +13,44 @@ namespace Encrypto
     {
         private string keyFilePath;
         private string ivFilePath;
-        private string encryptedFilePath = "encryptedFileAES.txt";
-        private string decryptedFilePath = "decryptedFileAES.txt";
 
-        private static string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        private string encryptedFilePath;
+        private string decryptedFilePath;
 
-        public AES(string keyFilePath, string ivFilePath)
+        public AES(string keyFilePath, string ivFilePath, string encryptedFilePath, string decryptedFilePath)
         {
             this.keyFilePath = keyFilePath;
             this.ivFilePath = ivFilePath;
+
+            this.encryptedFilePath = encryptedFilePath;
+            this.decryptedFilePath = decryptedFilePath;
+        }
+
+        public void GenerateAndWriteKey()
+        {
+            try
+            {
+                using (Aes aesAlg = Aes.Create())
+                {
+                    aesAlg.GenerateKey();
+                    // aesAlg.GenerateIV();
+
+                    string keyString = Convert.ToBase64String(aesAlg.Key);
+                    // string ivString = Convert.ToBase64String(aesAlg.IV);
+
+                    File.WriteAllText(keyFilePath, keyString);
+                    // File.WriteAllText(ivFilePath, ivString);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
         }
 
         public void EncryptFile(string filePath)
         {
-            PerformAesFileOperation(filePath, aesAlg =>
-            {
+            PerformAesFileOperation(filePath, aesAlg => {
                 aesAlg.GenerateIV();
                 File.WriteAllBytes(ivFilePath, aesAlg.IV);
                 return aesAlg.CreateEncryptor();
@@ -49,7 +72,7 @@ namespace Encrypto
             try
             {
                 bool decrypting = transformFunc.Method.Name.Contains("Decrypt");
-                string resultFileName = transformFunc.Method.Name.Contains("Encrypt") ? encryptedFilePath : decryptedFilePath;
+                string resultFilePath = transformFunc.Method.Name.Contains("Encrypt") ? encryptedFilePath : decryptedFilePath;
 
                 if (!File.Exists(keyFilePath))
                 {
@@ -74,7 +97,6 @@ namespace Encrypto
                         {
                             byte[] resultBytes = cryptoTransform.TransformFinalBlock(fileBytes, 0, fileBytes.Length);
 
-                            string resultFilePath = Path.Combine(desktopPath, resultFileName);
                             File.WriteAllBytes(resultFilePath, resultBytes);
 
                             MessageBox.Show($"File {(decrypting ? "decrypted" : "encrypted")} and saved to {resultFilePath} successfully.");

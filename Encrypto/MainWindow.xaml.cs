@@ -23,75 +23,57 @@ namespace Encrypto
     public partial class MainWindow : Window
     {
         private static string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+        private string secretKeyFilePath = Path.Combine(desktopPath, "tajni_kljuc.txt");
+        private string initializationVectorFilePath = Path.Combine(desktopPath, "inicijalizacijski_vektor.txt");
+
+        private string publicKeyFilePath = Path.Combine(desktopPath, "javni_kljuc.txt");
+        private string privateKeyFilePath = Path.Combine(desktopPath, "privatni_kljuc.txt");
+
+        private string encryptedFilePathStart = Path.Combine(desktopPath, "encryptedFile");
+        private string decryptedFilePathStart = Path.Combine(desktopPath, "decryptedFile");
+        private const string aesFilePathEnd = "AES.txt";
+        private const string rsaFilePathEnd = "RSA.txt";
+
         private AES aes;
+        private Rsa rsa;
 
         public MainWindow()
         {
             InitializeComponent();
-            aes = new AES(Path.Combine(desktopPath, "tajni_kljuc.txt"), Path.Combine(desktopPath, "inicijalizacijski_vektor.txt"));
+            aes = new AES(secretKeyFilePath, initializationVectorFilePath, encryptedFilePathStart + aesFilePathEnd, decryptedFilePathStart + aesFilePathEnd);
+            rsa = new Rsa(publicKeyFilePath, privateKeyFilePath, encryptedFilePathStart + rsaFilePathEnd, decryptedFilePathStart + rsaFilePathEnd);
         }
 
         private void Generate_Keys_Click(object sender, RoutedEventArgs e)
         {
-            string secretKeyPath = Path.Combine(desktopPath, "tajni_kljuc.txt");
-            string publicKeyPath = Path.Combine(desktopPath, "javni_kljuc.txt");
-            string privateKeyPath = Path.Combine(desktopPath, "privatni_kljuc.txt");
-
-            GenerateAndWriteAesKey(secretKeyPath);
-            GenerateAndWriteRSAKeys(publicKeyPath, privateKeyPath);
+           aes.GenerateAndWriteKey();
+            rsa.GenerateAndWriteKeys();
 
             MessageBox.Show("AES and RSA keys successfully generated");
         }
 
-        public static void GenerateAndWriteAesKey(string filePath)
-        {
-            try
-            {
-                using (Aes aesAlg = Aes.Create())
-                {
-                    aesAlg.GenerateKey();
-
-                    string keyString = Convert.ToBase64String(aesAlg.Key);
-
-                    File.WriteAllText(filePath, keyString);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-
-        public static void GenerateAndWriteRSAKeys(string publicKeyPath, string privateKeyPath)
-        {
-            try
-            {
-                using (RSA rsaAlg = RSA.Create())
-                {
-                    string publicKey = Convert.ToBase64String(rsaAlg.ExportRSAPublicKey());
-                    string privateKey = Convert.ToBase64String(rsaAlg.ExportRSAPrivateKey());
-
-                    File.WriteAllText(publicKeyPath, publicKey);
-                    File.WriteAllText(privateKeyPath, privateKey);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-
         private void Encrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAes(aes.EncryptFile);
+            ProcessFileWithAlgorithm(aes.EncryptFile);
         }
 
         private void Decrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAes(aes.DecryptFile);
+            ProcessFileWithAlgorithm(aes.DecryptFile);
         }
 
-        private void ProcessFileWithAes(Action<string> processFunction)
+        private void Encrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessFileWithAlgorithm(rsa.EncryptFile);
+        }
+
+        private void Decrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessFileWithAlgorithm(rsa.DecryptFile);
+        }
+
+        private void ProcessFileWithAlgorithm(Action<string> processFunction)
         {
             try
             {
@@ -107,21 +89,11 @@ namespace Encrypto
             }
             catch (Exception ex)
             {
-               MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Upload_Files_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Encrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Decrypt_Asymmetric_Click(object sender, RoutedEventArgs e)
         {
 
         }
