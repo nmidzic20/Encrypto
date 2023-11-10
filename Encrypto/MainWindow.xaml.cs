@@ -83,15 +83,15 @@ namespace Encrypto
 
         private void Encrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAes(aes.EncryptFile, "encryptedFileAES.txt");
+            ProcessFileWithAes(aes.EncryptFile);
         }
 
         private void Decrypt_Symmetric_Click(object sender, RoutedEventArgs e)
         {
-            ProcessFileWithAes(aes.DecryptFile, "decryptedFileAES.txt");
+            ProcessFileWithAes(aes.DecryptFile);
         }
 
-        private void ProcessFileWithAes(Action<string, string> processFunction, string resultFileName)
+        private void ProcessFileWithAes(Action<string> processFunction)
         {
             try
             {
@@ -102,7 +102,7 @@ namespace Encrypto
                 if (openFileDialog.ShowDialog() == true)
                 {
                     string filePath = openFileDialog.FileName;
-                    processFunction(filePath, resultFileName);
+                    processFunction(filePath);
                 }
             }
             catch (Exception ex)

@@ -13,6 +13,9 @@ namespace Encrypto
     {
         private string keyFilePath;
         private string ivFilePath;
+        private string encryptedFilePath = "encryptedFileAES.txt";
+        private string decryptedFilePath = "decryptedFileAES.txt";
+
         private static string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
         public AES(string keyFilePath, string ivFilePath)
@@ -21,9 +24,9 @@ namespace Encrypto
             this.ivFilePath = ivFilePath;
         }
 
-        public void EncryptFile(string filePath, string resultFileName)
+        public void EncryptFile(string filePath)
         {
-            PerformAesFileOperation(filePath, resultFileName, aesAlg =>
+            PerformAesFileOperation(filePath, aesAlg =>
             {
                 aesAlg.GenerateIV();
                 File.WriteAllBytes(ivFilePath, aesAlg.IV);
@@ -31,9 +34,9 @@ namespace Encrypto
             });
         }
 
-        public void DecryptFile(string filePath, string resultFileName)
+        public void DecryptFile(string filePath)
         {
-            PerformAesFileOperation(filePath, resultFileName, aesAlg =>
+            PerformAesFileOperation(filePath, aesAlg =>
             {
                 byte[] iv = File.ReadAllBytes(ivFilePath);
                 aesAlg.IV = iv;
@@ -41,11 +44,22 @@ namespace Encrypto
             });
         }
 
-        private void PerformAesFileOperation(string filePath, string resultFileName, Func<Aes, ICryptoTransform> transformFunc)
+        private void PerformAesFileOperation(string filePath, Func<Aes, ICryptoTransform> transformFunc)
         {
             try
             {
-                if (File.Exists(keyFilePath))
+                bool decrypting = transformFunc.Method.Name.Contains("Decrypt");
+                string resultFileName = transformFunc.Method.Name.Contains("Encrypt") ? encryptedFilePath : decryptedFilePath;
+
+                if (!File.Exists(keyFilePath))
+                {
+                    MessageBox.Show("No symmetric key file found! File cannot be encrypted or decrypted without the key.", "Key Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                else if (decrypting && !File.Exists(ivFilePath))
+                {
+                    MessageBox.Show("No IV file found! File cannot be decrypted without the initialization vector with which it was encrypted.", "IV Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                else
                 {
                     string keyString = File.ReadAllText(keyFilePath);
                     byte[] key = Convert.FromBase64String(keyString);
@@ -63,14 +77,11 @@ namespace Encrypto
                             string resultFilePath = Path.Combine(desktopPath, resultFileName);
                             File.WriteAllBytes(resultFilePath, resultBytes);
 
-                            MessageBox.Show($"File {(transformFunc.Method.Name.Contains("Encrypt") ? "encrypted" : "decrypted")} and saved to {resultFilePath} successfully.");
+                            MessageBox.Show($"File {(decrypting ? "decrypted" : "encrypted")} and saved to {resultFilePath} successfully.");
                         }
                     }
                 }
-                else
-                {
-                    MessageBox.Show("No symmetric key found! File cannot be decrypted without the key with which it was encrypted.", "Key Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
+               
             }
             catch (Exception ex)
             {
