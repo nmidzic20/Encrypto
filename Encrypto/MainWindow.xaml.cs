@@ -115,12 +115,21 @@ namespace Encrypto
 
         public static void EncryptFileWithAes(string filePath, string resultFileName)
         {
-            PerformAesFileOperation(filePath, resultFileName, aesAlg => aesAlg.CreateEncryptor());
+            PerformAesFileOperation(filePath, resultFileName, aesAlg => {
+                aesAlg.GenerateIV();
+                File.WriteAllBytes(Path.Combine(desktopPath, "iv.txt"), aesAlg.IV);
+                return aesAlg.CreateEncryptor();
+            });
         }
 
         public static void DecryptFileWithAes(string filePath, string resultFileName)
         {
-            PerformAesFileOperation(filePath, resultFileName, aesAlg => aesAlg.CreateDecryptor());
+            PerformAesFileOperation(filePath, resultFileName, aesAlg =>
+            {
+                byte[] iv = File.ReadAllBytes(Path.Combine(desktopPath, "iv.txt"));
+                aesAlg.IV = iv;
+                return aesAlg.CreateDecryptor();
+            });
         }
 
         private static void PerformAesFileOperation(string filePath, string resultFileName, Func<Aes, ICryptoTransform> transformFunc)
@@ -140,12 +149,15 @@ namespace Encrypto
 
                         byte[] fileBytes = File.ReadAllBytes(filePath);
 
-                        byte[] resultBytes = transformFunc(aesAlg).TransformFinalBlock(fileBytes, 0, fileBytes.Length);
+                        using (ICryptoTransform cryptoTransform = transformFunc(aesAlg))
+                        {
+                            byte[] resultBytes = cryptoTransform.TransformFinalBlock(fileBytes, 0, fileBytes.Length);
 
-                        string resultFilePath = Path.Combine(desktopPath, resultFileName);
-                        File.WriteAllBytes(resultFilePath, resultBytes);
+                            string resultFilePath = Path.Combine(desktopPath, resultFileName);
+                            File.WriteAllBytes(resultFilePath, resultBytes);
 
-                        MessageBox.Show($"File {(transformFunc.Method.Name.Contains("Encrypt") ? "encrypted" : "decrypted")} and saved to {resultFilePath} successfully.");
+                            MessageBox.Show($"File {(transformFunc.Method.Name.Contains("Encrypt") ? "encrypted" : "decrypted")} and saved to {resultFilePath} successfully.");
+                        }
                     }
                 }
                 else
