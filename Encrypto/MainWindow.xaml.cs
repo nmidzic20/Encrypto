@@ -103,12 +103,52 @@ namespace Encrypto
 
         private void Make_Digital_Signature_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Title = "Select a file for which you want to create a digital signature";
+                openFileDialog.Filter = "Text Files (*.txt)|*.txt";
 
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    string filePath = openFileDialog.FileName;
+                    sha256.CalculateDigitalSignature(filePath, privateKeyFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Check_Digital_Signature_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Title = "Select the original file";
+                openFileDialog.Filter = "Text Files (*.txt)|*.txt";
 
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    string filePath = openFileDialog.FileName;
+
+                    OpenFileDialog signatureFileDialog = new OpenFileDialog();
+                    signatureFileDialog.Title = "Select the digital signature file";
+                    signatureFileDialog.Filter = "All Files (*.*)|*.*";
+
+                    if (signatureFileDialog.ShowDialog() == true)
+                    {
+                        string digitalSignatureFilePath = signatureFileDialog.FileName;
+
+                        sha256.CheckDigitalSignature(filePath, digitalSignatureFilePath, publicKeyFilePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void ProcessFile(Action<string> processFunction)
