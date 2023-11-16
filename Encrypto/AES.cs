@@ -33,13 +33,10 @@ namespace Encrypto
                 using (Aes aesAlg = Aes.Create())
                 {
                     aesAlg.GenerateKey();
-                    // aesAlg.GenerateIV();
 
                     string keyString = Convert.ToBase64String(aesAlg.Key);
-                    // string ivString = Convert.ToBase64String(aesAlg.IV);
 
                     File.WriteAllText(keyFilePath, keyString);
-                    // File.WriteAllText(ivFilePath, ivString);
                 }
             }
             catch (Exception ex)

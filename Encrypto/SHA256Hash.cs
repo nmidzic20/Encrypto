@@ -32,7 +32,7 @@ namespace Encrypto
         {
             try
             {
-                string hash = CalculateFileHash(filePath);
+                string data = File.ReadAllText(filePath);
 
                 string privateKeyString = File.ReadAllText(privateKeyFilePath);
 
@@ -40,8 +40,8 @@ namespace Encrypto
                 {
                     rsaAlg.ImportRSAPrivateKey(Convert.FromBase64String(privateKeyString), out _);
 
-                    byte[] hashBytes = Encoding.UTF8.GetBytes(hash);
-                    byte[] signatureBytes = rsaAlg.SignData(hashBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                    byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+                    byte[] signatureBytes = rsaAlg.SignData(dataBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                     string digitalSignatureFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "digitalSignature.txt");
                     File.WriteAllBytes(digitalSignatureFilePath, signatureBytes);
@@ -60,17 +60,16 @@ namespace Encrypto
             try
             {
                 byte[] signatureBytes = File.ReadAllBytes(digitalSignatureFilePath);
-
+                string data = File.ReadAllText(filePath);
                 string publicKeyString = File.ReadAllText(publicKeyFilePath);
 
                 using (RSA rsaAlg = RSA.Create())
                 {
                     rsaAlg.ImportRSAPublicKey(Convert.FromBase64String(publicKeyString), out _);
 
-                    string hash = CalculateFileHash(filePath);
-                    byte[] hashBytes = Encoding.UTF8.GetBytes(hash);
+                    byte[] dataBytes = Encoding.UTF8.GetBytes(data);
 
-                    bool isSignatureValid = rsaAlg.VerifyData(hashBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                    bool isSignatureValid = rsaAlg.VerifyData(dataBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                     if (isSignatureValid)
                     {

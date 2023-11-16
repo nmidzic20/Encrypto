@@ -75,11 +75,6 @@ namespace Encrypto
             ProcessFile(rsa.DecryptFile);
         }
 
-        private void Upload_Files_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private void Calculate_Hash_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -92,6 +87,10 @@ namespace Encrypto
                 {
                     string filePath = openFileDialog.FileName;
                     string hash = sha256.CalculateFileHash(filePath);
+
+                    string hashFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "hashFile.txt");
+                    File.WriteAllText(hashFilePath, hash);
+
                     MessageBox.Show("Calculated hash with SHA-256: " + hash);
                 }
             }

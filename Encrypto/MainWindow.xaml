@@ -7,7 +7,6 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Button Content="Upload files" HorizontalAlignment="Left" Margin="196,160,0,0" VerticalAlignment="Top" Width="133" Name="Upload_Files" Click="Upload_Files_Click"/>
         <Button Content="Symmetric encryption" HorizontalAlignment="Left" Margin="196,197,0,0" VerticalAlignment="Top" Width="133" Name="Encrypt_Symmetric" Click="Encrypt_Symmetric_Click"/>
         <Button Content="Symmetric decryption" HorizontalAlignment="Left" Margin="357,197,0,0" VerticalAlignment="Top" Width="133" Name="Decrypt_Symmetric" Click="Decrypt_Symmetric_Click"/>
         <Button Content="Asymmetric encryption" HorizontalAlignment="Left" Margin="196,236,0,0" VerticalAlignment="Top" Width="133" RenderTransformOrigin="0.414,-0.634" Name="Encrypt_Asymmetric" Click="Encrypt_Asymmetric_Click"/>
